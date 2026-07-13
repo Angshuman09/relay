@@ -1,7 +1,5 @@
 # Relay
 
-Relay is an email newsletter service built while following the book **Zero to Production in Rust** by Luca Palmieri.
-
 This application is a backend service for managing an email newsletter. Users can subscribe to the newsletter by submitting their email address through an API endpoint. The service confirms their subscription via a confirmation email and stores verified subscribers in a database. The newsletter author can then send an email broadcast to all confirmed subscribers.
 
 The project intentionally mirrors the concerns of a production system rather than a toy app. It deals with input validation, error handling, database migrations, background email delivery, authentication, and deployment pipelines.
