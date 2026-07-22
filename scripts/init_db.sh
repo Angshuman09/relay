@@ -12,6 +12,9 @@ fi
 # Check if sqlx is installed
 if ! [ -x "$(command -v sqlx)" ]; then
   echo >&2 "Error: sqlx is not installed."
+  echo >&2 "Use:"
+  echo >&2 "cargo install sqlx-cli --no-default-features --features postgres"
+  echo >&2 "to install it."
   exit 1
 fi
 
@@ -21,15 +24,16 @@ DB_PASSWORD=${POSTGRES_PASSWORD:=password}
 DB_NAME=${POSTGRES_DB:=relay}
 DB_PORT=${POSTGRES_PORT:=5432}
 
-# Start PostgreSQL container
-docker run \
-  --name relay \
-  -e POSTGRES_USER="${DB_USER}" \
-  -e POSTGRES_PASSWORD="${DB_PASSWORD}" \
-  -e POSTGRES_DB="${DB_NAME}" \
-  -p "${DB_PORT}":5432 \
-  -d postgres \
-  postgres -N 1000
+if [[ -z "${SKIP_DOCKER}" ]]; then
+  docker run \
+    --name relay \
+    -e POSTGRES_USER="${DB_USER}" \
+    -e POSTGRES_PASSWORD="${DB_PASSWORD}" \
+    -e POSTGRES_DB="${DB_NAME}" \
+    -p "${DB_PORT}":5432 \
+    -d postgres \
+    postgres -N 1000
+fi
 
 # Wait until PostgreSQL is ready
 export PGPASSWORD="${DB_PASSWORD}"
@@ -44,10 +48,13 @@ until psql \
   sleep 1
 done
 
->&2 echo "Postgres is up and running!"
+>&2 echo "Postgres is up and running on port ${DB_PORT} - running migrations now!"
 
 # Export DATABASE_URL for sqlx
 export DATABASE_URL="postgres://${DB_USER}:${DB_PASSWORD}@localhost:${DB_PORT}/${DB_NAME}"
 
 # Create database if it doesn't exist
 sqlx database create
+sqlx migrate run
+
+>&2 echo "Postgres has been migrated, ready to go!"
